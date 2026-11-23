@@ -1,0 +1,92 @@
+name: ci
+
+# Every push and every pull request, because the alternative — which is where
+# this repo was — is that the first thing to build the Rust half on a platform
+# other than the author's is the tag that was meant to ship.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  # Cancel superseded runs. The opposite of `release.yml`, and for the opposite
+  # reason: a cancelled CI run costs nothing, a cancelled release can leave a
+  # half-uploaded feed.
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      # `--frozen-lockfile` rather than a plain install: it fails when
+      # `package.json` moved and `bun.lock` did not, which is a diff that works
+      # fine locally and installs something different for everyone else.
+      - run: bun install --frozen-lockfile
+
+      # `tsc && vite build` — the typecheck plus proof that the bundle actually
+      # builds. A type error and a broken import resolve differently, and only
+      # the second one waits until `tauri build` to appear.
+      - run: bun run build
+
+      - run: bun test
+
+  rust:
+    strategy:
+      # Every platform's result is wanted, not just the first failure — the
+      # whole point of this job is that the platforms differ.
+      fail-fast: false
+      matrix:
+        # All three, and specifically the ones `release.yml` bundles for.
+        #
+        # This matrix is what gives `credentials::tests` its meaning. The
+        # credential store is chosen per target by a feature list, and a target
+        # missing from that list does not fail to build — it silently gets an
+        # in-memory mock, and the app forgets the user's API key at every
+        # launch. That test asserts the store rather than assuming it, and it
+        # can only assert it on a runner of that platform. Run on macOS alone it
+        # passes for free and proves nothing.
+        #
+        # ubuntu-22.04 rather than -latest, to match the webkit2gtk the release
+        # bundles link against.
+        platform: [macos-latest, ubuntu-22.04, windows-latest]
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      # Separate cache key from the release workflow's: this job builds debug
+      # and that one builds release, so sharing an entry would mean each
+      # eviction costs the other a cold build.
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: ./src-tauri -> target
+          key: ci-${{ matrix.platform }}
+
+      - name: Install Linux dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        uses: ./.github/actions/linux-deps
+
+      # `--all-targets` reaches the test modules too. They are where the tricky
+      # code is exercised, so linting everything but them inverts the priority.
+      - name: Clippy
+        working-directory: ./src-tauri
+        run: cargo clippy --all-targets -- -D warnings
+
+      - name: Test
+        working-directory: ./src-tauri
+        run: cargo test --lib

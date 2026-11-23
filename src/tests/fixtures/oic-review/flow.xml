@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Synthetic review fixture, not an importable Oracle export. -->
+<integration xmlns="urn:atimo:test" name="WORKERS_DEMO">
+  <invoke name="ReadWorkers" method="GET" resource="/hcmRestApi/resources/11.13.18.05/workers"/>
+  <map source="Resources/request.xsl"/>
+</integration>

@@ -1,0 +1,47 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Updater signing. The private key lives in ~/.tauri and belongs in a CI secret,
+# never in the tree — anyone holding it can sign a build this app will install
+# without asking. The .pub half is meant to be public and is already committed,
+# inside tauri.conf.json.
+*.key
+!*.key.pub
+
+# Exact request captures can include project text and attachment bytes.
+evals/oracle/captures/
+evals/oracle/resultados/*-capture-*.json
+
+# IAR eval: archives and answers are client data.
+evals/iar/archives/
+evals/iar/resultados/
+
+# Personal tooling and local eval runs; not part of the product.
+evals/oracle/resultados/
+.agents/
+.claude/
+.commandcode/
+skills-lock.json
+docs/prd.md

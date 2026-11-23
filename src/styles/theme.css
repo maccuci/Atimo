@@ -1,0 +1,201 @@
+/*
+ * Atimo — design tokens
+ *
+ * Visual reference: openai/codex (codex-rs/tui/styles.md).
+ * The Codex TUI restricts itself to a monochrome surface plus a handful of
+ * semantic ANSI colors. We mirror that discipline in a GUI:
+ *
+ *   cyan     user input, selection, status indicators
+ *   green    success, additions
+ *   red      errors, failures, deletions
+ *   magenta  the agent itself (Codex -> here, the assistant/model)
+ *   default  everything else
+ *
+ * Nothing else gets a hue. Hierarchy comes from dim/faint foregrounds and
+ * 1px borders, never from decorative color.
+ */
+
+:root {
+  /* ---- type ------------------------------------------------------------ */
+  --font-mono:
+    "Berkeley Mono", "SF Mono", ui-monospace, "JetBrains Mono", "Menlo",
+    "Consolas", monospace;
+  /* UI chrome uses a clean sans — marketplace + rail read closer to the
+     product surface than the Codex mono TUI. Mono stays for code/data. */
+  --font-ui:
+    "SF Pro Text", "SF Pro Display", "Segoe UI", "Helvetica Neue", system-ui,
+    -apple-system, sans-serif;
+
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-base: 13px;
+  --text-md: 14px;
+  --text-lg: 16px;
+  --text-xl: 22px;
+  --text-2xl: 28px;
+
+  /* ---- geometry -------------------------------------------------------- */
+  --radius: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --rail-w: 260px;
+  --context-w: 320px;
+  --titlebar-h: 48px;
+  --statusbar-h: 26px;
+
+  /* Notch / home indicator — zero on environments without insets. */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+
+  /* ---- motion ---------------------------------------------------------- */
+  /*
+   * A closed vocabulary. Every transition in the app picks one curve and one
+   * duration from below; nothing hardcodes a millisecond. The point is not the
+   * individual numbers, it is that two surfaces animating for the same reason
+   * animate for the same length — a panel opening and a header following it
+   * have to arrive together or the eye reads them as two events.
+   *
+   * The split between curves is by *cause*, not by taste:
+   *   ease-out      an element arriving under its own power (entrances)
+   *   ease-resize   geometry the user is driving (pane widths, folds)
+   *   ease-resort   something moving because its neighbours changed
+   *   ease-hover    color only, where overshoot would look like a glitch
+   */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-resize: cubic-bezier(0, 0, 0.58, 1);
+  --ease-resort: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-hover: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /*
+   * One knob scales every duration below. It exists to be turned up from the
+   * devtools — an 8x pass is the only reliable way to see whether two things
+   * that look simultaneous actually are, and a 200ms transition is too short to
+   * debug at full speed. Left at 1 in every build.
+   */
+  --motion-scale: 1;
+
+  --dur-menu: calc(140ms * var(--motion-scale));
+  --dur-quick: calc(150ms * var(--motion-scale));
+  --dur-dialog: calc(180ms * var(--motion-scale));
+  --dur-collapse: calc(180ms * var(--motion-scale));
+  --dur-resize: calc(200ms * var(--motion-scale));
+  --dur-chevron: calc(200ms * var(--motion-scale));
+  --dur-resort: calc(260ms * var(--motion-scale));
+  --dur-enter: calc(500ms * var(--motion-scale));
+}
+
+/* ---- dark (default) ---------------------------------------------------- */
+:root,
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg: #0a0a0a;
+  --bg-raised: #111111;
+  --bg-inset: #161616;
+  --bg-hover: #1a1a1a;
+  --bg-active: #222222;
+  --bg-sidebar: #0c0c0c;
+  --bg-surface: #121212;
+
+  --border: #1f1f1f;
+  --border-strong: #2e2e2e;
+
+  --fg: #ffffff;
+  --fg-dim: #8a8a8a;
+  --fg-faint: #5c5c5c;
+  --badge: #e5484d;
+
+  --cyan: #5ec8de;
+  --cyan-dim: #2a4a52;
+  --green: #57b86f;
+  --green-dim: #23402b;
+  --red: #e0625c;
+  --red-dim: #4a2422;
+  --magenta: #b58ce0;
+  --magenta-dim: #3a2c4a;
+  /* The fifth accent, added for attachments: the context meter had run out of
+     hues that were not already spoken for, and two adjacent bands sharing one
+     would read as a single segment. */
+  --amber: #d9a441;
+  --amber-dim: #46351a;
+
+  --selection: #1e3a42;
+  --shadow-panel: 0 8px 32px rgb(0 0 0 / 60%);
+}
+
+/* ---- light ------------------------------------------------------------- */
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --bg: #f7f7f5;
+  --bg-raised: #ffffff;
+  --bg-inset: #f0f0ed;
+  --bg-hover: #ebebe8;
+  --bg-active: #e3e3df;
+  --bg-sidebar: #f2f2ef;
+  --bg-surface: #ffffff;
+
+  --border: #e4e4e0;
+  --border-strong: #cbcbc7;
+
+  --fg: #111110;
+  --fg-dim: #6b6b67;
+  --fg-faint: #9a9a95;
+  --badge: #e5484d;
+
+  --cyan: #0e7c94;
+  --cyan-dim: #cfe8ee;
+  --green: #2f7d45;
+  --green-dim: #d5e9da;
+  --red: #c0392f;
+  --red-dim: #f4dbd8;
+  --magenta: #7a4fb0;
+  --magenta-dim: #e6dcf2;
+  --amber: #96650b;
+  --amber-dim: #f5e6c8;
+
+  --selection: #cfe8ee;
+  --shadow-panel: 0 8px 32px rgb(0 0 0 / 12%);
+}
+
+/* Expose the tokens to Tailwind utilities (`bg-bg-raised`, `text-fg-dim`, …) */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-raised: var(--bg-raised);
+  --color-bg-inset: var(--bg-inset);
+  --color-bg-hover: var(--bg-hover);
+  --color-bg-active: var(--bg-active);
+  --color-bg-sidebar: var(--bg-sidebar);
+  --color-bg-surface: var(--bg-surface);
+
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+
+  --color-fg: var(--fg);
+  --color-fg-dim: var(--fg-dim);
+  --color-fg-faint: var(--fg-faint);
+  --color-badge: var(--badge);
+
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+
+  --color-cyan: var(--cyan);
+  --color-cyan-dim: var(--cyan-dim);
+  --color-green: var(--green);
+  --color-green-dim: var(--green-dim);
+  --color-red: var(--red);
+  --color-red-dim: var(--red-dim);
+  --color-magenta: var(--magenta);
+  --color-magenta-dim: var(--magenta-dim);
+  --color-amber: var(--amber);
+  --color-amber-dim: var(--amber-dim);
+
+  --font-mono: var(--font-mono);
+  --font-ui: var(--font-ui);
+
+  --radius-DEFAULT: var(--radius);
+}

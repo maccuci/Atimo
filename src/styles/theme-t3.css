@@ -1,0 +1,350 @@
+/*
+ * Atimo — "Graphene Night" design tokens
+ *
+ * Visual reference: pingdotgg/t3code (t3.codes). T3 Code ships a true-black
+ * canvas, Inter Variable, a single confident indigo accent and a quiet
+ * zinc/white-alpha hierarchy — the chrome recedes and one color does the
+ * talking. We adapt that language here, keeping Atimo's own discipline:
+ * exactly four semantic hues; everything else is neutral.
+ *
+ *   indigo    user input, selection, status, primary actions   (t3 `--primary`)
+ *   emerald   success, additions
+ *   red       errors, failures, deletions
+ *   fuchsia   the agent itself (the assistant/model)
+ *
+ * Type is Inter Variable (bundled via `@fontsource-variable/inter`, imported
+ * in globals.css) — T3 Code's own face; mono for code/data only.
+ *
+ * Token contract: every variable consumed by components and globals.css is
+ * declared here with the same name and role as the previous `theme.css`
+ * (Codex-derived). Swapping back is a one-line change in globals.css.
+ * Legacy accent names (`--cyan`, `--cyan-dim`, …) are preserved as aliases of
+ * the new semantic tokens (`--accent`, `--accent-dim`, …) so existing
+ * components pick up the new identity without being touched.
+ */
+
+:root {
+  /* ---- type ------------------------------------------------------------ */
+  --font-ui:
+    -apple-system, BlinkMacSystemFont, "Inter Variable", "Inter", "Segoe UI",
+    system-ui, sans-serif; /* t3code order: SF on Apple, Inter elsewhere */
+  --font-mono:
+    ui-monospace, "SF Mono", "SFMono-Regular", "Berkeley Mono", "JetBrains Mono",
+    "Menlo", "Consolas", monospace;
+
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-base: 13px;
+  --text-md: 14px;
+  --text-lg: 16px;
+  --text-xl: 22px;
+  --text-2xl: 28px;
+
+  /* ---- geometry -------------------------------------------------------- */
+  /* T3 Code pins radius at 0.5rem with +4/+8/+12 steps; kept. */
+  --radius: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --rail-w: 260px;
+  --context-w: 320px;
+  --titlebar-h: 48px;
+  --statusbar-h: 26px;
+
+  /* Notch / home indicator — zero on environments without insets. */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+
+  /* ---- motion ---------------------------------------------------------- */
+  /*
+   * Unchanged from the Codex-derived theme: a closed vocabulary of curves and
+   * durations. The split is by *cause*:
+   *   ease-out      an element arriving under its own power (entrances)
+   *   ease-resize   geometry the user is driving (pane widths, folds)
+   *   ease-resort   something moving because its neighbours changed
+   *   ease-hover    color only, where overshoot would look like a glitch
+   */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-resize: cubic-bezier(0, 0, 0.58, 1);
+  --ease-resort: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-hover: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* One knob scales every duration below; leave at 1 in every build. */
+  --motion-scale: 1;
+
+  --dur-menu: calc(140ms * var(--motion-scale));
+  --dur-quick: calc(150ms * var(--motion-scale));
+  --dur-dialog: calc(180ms * var(--motion-scale));
+  --dur-collapse: calc(180ms * var(--motion-scale));
+  --dur-resize: calc(200ms * var(--motion-scale));
+  --dur-chevron: calc(200ms * var(--motion-scale));
+  --dur-resort: calc(260ms * var(--motion-scale));
+  --dur-enter: calc(500ms * var(--motion-scale));
+
+  /* T3-style glass for floating chrome (menus, dialogs, popovers). */
+  --glass-blur: 16px;
+  --glass-opacity: 82%;
+  --glass-saturation: 1.1;
+}
+
+/* ---- dark (default) ---------------------------------------------------- */
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* True-black canvas, as in T3 Code dark. Raised surfaces lift via tone,
+     alpha-on-white controls carry the hierarchy — never milky gray fills. */
+  --bg: #000000;
+  --bg-raised: #0c0c0d;
+  --bg-inset: #111113;
+  --bg-hover: rgb(255 255 255 / 4%);
+  --bg-active: rgb(255 255 255 / 7%);
+  /* t3code dark: the sidebar sits on the card tone, one step above the
+     true-black canvas, so the two columns separate without a heavy rule. */
+  --bg-sidebar: color-mix(in srgb, #0a0a0a 97%, #ffffff);
+  --bg-surface: #0c0c0d;
+
+  --border: rgb(255 255 255 / 8%);
+  --border-strong: rgb(255 255 255 / 14%);
+  --input: rgb(255 255 255 / 11%);
+
+  --fg: #f1f3f7;
+  --fg-dim: #a3a3a3;
+  --fg-faint: #8f8f8f;
+  --badge: #ef4444;
+
+  /* The one accent. T3 Code's dark primary, oklch 264 — a cool indigo that
+     sits between blue and violet and reads as "graphene under voltage". */
+  --accent: oklch(0.571 0.21 264);
+  --accent-hover: oklch(0.62 0.2 264);
+  --accent-dim: color-mix(in srgb, var(--accent) 17%, transparent);
+  --ring: var(--accent);
+
+  --green: #34d399;
+  --green-dim: color-mix(in srgb, var(--green) 15%, transparent);
+  --red: #f87171;
+  --red-dim: color-mix(in srgb, var(--red) 14%, transparent);
+  --magenta: #e879f9;
+  --magenta-dim: color-mix(in srgb, var(--magenta) 14%, transparent);
+  --amber: #fbbf24;
+  --amber-dim: color-mix(in srgb, var(--amber) 15%, transparent);
+
+  /* Legacy aliases — keep components source-compatible. */
+  --cyan: var(--accent);
+  --cyan-dim: var(--accent-dim);
+
+  --selection: color-mix(in srgb, var(--accent) 28%, transparent);
+  --surface-raised: color-mix(in srgb, #0c0c0d 97%, #ffffff);
+  --shadow-panel:
+    inset 0 1px rgb(255 255 255 / 4%),
+    0 24px 64px -24px rgb(0 0 0 / 80%);
+}
+
+/* ---- light ------------------------------------------------------------- */
+/* Light palettes below inherit the light shadows, glass and color-scheme. */
+[data-theme="light"],
+[data-theme="solarized-light"],
+[data-theme="latte"] {
+  color-scheme: light;
+
+  /* T3 Code light: a zinc-25 canvas with pure-white cards. */
+  --bg: oklch(0.992 0 0);
+  --bg-raised: #ffffff;
+  --bg-inset: #f4f4f5;
+  --bg-hover: #f4f4f5;
+  --bg-active: #e8e8ea;
+  --bg-sidebar: #fafafa;
+  --bg-surface: #ffffff;
+
+  --border: #e4e4e7;
+  --border-strong: #d4d4d8;
+  --input: #d4d4d8;
+
+  --fg: #18181b;
+  --fg-dim: #52525b;
+  --fg-faint: #71717a;
+  --badge: #ef4444;
+
+  --accent: oklch(0.488 0.217 264);
+  --accent-hover: oklch(0.44 0.22 264);
+  --accent-dim: color-mix(in srgb, var(--accent) 13%, transparent);
+  --ring: var(--accent);
+
+  --green: #059669;
+  --green-dim: color-mix(in srgb, var(--green) 12%, transparent);
+  --red: #dc2626;
+  --red-dim: color-mix(in srgb, var(--red) 10%, transparent);
+  --magenta: #c026d3;
+  --magenta-dim: color-mix(in srgb, var(--magenta) 11%, transparent);
+  --amber: #b45309;
+  --amber-dim: color-mix(in srgb, var(--amber) 13%, transparent);
+
+  --cyan: var(--accent);
+  --cyan-dim: var(--accent-dim);
+
+  --selection: color-mix(in srgb, var(--accent) 17%, transparent);
+  --surface-raised: color-mix(in srgb, #ffffff 20%, #f4f4f5);
+  --shadow-panel:
+    0 1px 2px rgb(24 24 27 / 6%),
+    0 16px 40px -16px rgb(24 24 27 / 18%);
+
+  --glass-blur: 12px;
+  --glass-opacity: 84%;
+  --glass-saturation: 1.08;
+}
+
+/* ---- palettes ----------------------------------------------------------
+ * Bare attribute selectors (not `:root[...]`) so a preview card can wear a
+ * theme by carrying `data-theme` itself. Only colors change; the four
+ * semantic roles stay. `--accent` always carries white text (`bg-accent
+ * text-white`), so each one is picked dark enough for that.
+ */
+[data-theme="nord"] {
+  --bg: #2e3440; --bg-raised: #353c4a; --bg-inset: #2a2f3a; --bg-sidebar: #2b303b;
+  --bg-surface: #353c4a; --surface-raised: #3b4252;
+  --fg: #eceff4; --fg-dim: #c2c9d6; --fg-faint: #98a1b3;
+  --accent: #5e81ac; --accent-hover: #6d8fba;
+  --green: #a3be8c; --red: #bf616a; --magenta: #b48ead; --amber: #ebcb8b;
+}
+[data-theme="dracula"] {
+  --bg: #282a36; --bg-raised: #2f3241; --bg-inset: #21222c; --bg-sidebar: #21222c;
+  --bg-surface: #2f3241; --surface-raised: #343746;
+  --fg: #f8f8f2; --fg-dim: #c5c8dc; --fg-faint: #9aa0bd;
+  --accent: #8a63d2; --accent-hover: #9a76dc;
+  --green: #50fa7b; --red: #ff5555; --magenta: #ff79c6; --amber: #f1fa8c;
+}
+[data-theme="mocha"] {
+  --bg: #1e1e2e; --bg-raised: #24243a; --bg-inset: #181825; --bg-sidebar: #181825;
+  --bg-surface: #24243a; --surface-raised: #2a2a40;
+  --fg: #cdd6f4; --fg-dim: #b0b7d3; --fg-faint: #9399b2;
+  --accent: #7c5cd6; --accent-hover: #8b6ee0;
+  --green: #a6e3a1; --red: #f38ba8; --magenta: #f5c2e7; --amber: #f9e2af;
+}
+[data-theme="tokyo"] {
+  --bg: #1a1b26; --bg-raised: #1f2335; --bg-inset: #16161e; --bg-sidebar: #16161e;
+  --bg-surface: #1f2335; --surface-raised: #24283b;
+  --fg: #c0caf5; --fg-dim: #a9b1d6; --fg-faint: #8189b0;
+  --accent: #4f6fc4; --accent-hover: #5f7fd2;
+  --green: #9ece6a; --red: #f7768e; --magenta: #bb9af7; --amber: #e0af68;
+}
+[data-theme="gruvbox"] {
+  --bg: #282828; --bg-raised: #32302f; --bg-inset: #1d2021; --bg-sidebar: #1d2021;
+  --bg-surface: #32302f; --surface-raised: #3c3836;
+  --fg: #ebdbb2; --fg-dim: #c9b99a; --fg-faint: #a89984;
+  --accent: #458588; --accent-hover: #519598;
+  --green: #b8bb26; --red: #fb4934; --magenta: #d3869b; --amber: #fabd2f;
+}
+[data-theme="rose-pine"] {
+  --bg: #191724; --bg-raised: #1f1d2e; --bg-inset: #15131f; --bg-sidebar: #1f1d2e;
+  --bg-surface: #1f1d2e; --surface-raised: #26233a;
+  --fg: #e0def4; --fg-dim: #bcb9d4; --fg-faint: #908caa;
+  --accent: #31748f; --accent-hover: #3b85a3;
+  --green: #9ccfd8; --red: #eb6f92; --magenta: #c4a7e7; --amber: #f6c177;
+}
+[data-theme="solarized-light"] {
+  --bg: #fdf6e3; --bg-raised: #fffbf0; --bg-inset: #eee8d5; --bg-sidebar: #f5eedb;
+  --bg-surface: #fffbf0; --surface-raised: #fffbf0;
+  --bg-hover: #eee8d5; --bg-active: #e6dfc8;
+  --border: #e6dfc8; --border-strong: #d6ceb5; --input: #d6ceb5;
+  --fg: #073642; --fg-dim: #4f6770; --fg-faint: #657b83;
+  --accent: #1f6fa8; --accent-hover: #1a5f90;
+  --green: #6b7a00; --red: #dc322f; --magenta: #d33682; --amber: #946f00;
+}
+[data-theme="latte"] {
+  --bg: #eff1f5; --bg-raised: #ffffff; --bg-inset: #e6e9ef; --bg-sidebar: #e6e9ef;
+  --bg-surface: #ffffff; --surface-raised: #ffffff;
+  --bg-hover: #e6e9ef; --bg-active: #dce0e8;
+  --border: #dce0e8; --border-strong: #ccd0da; --input: #ccd0da;
+  --fg: #4c4f69; --fg-dim: #5c5f77; --fg-faint: #6c6f85;
+  --accent: #8839ef; --accent-hover: #7a2ee0;
+  --green: #40a02b; --red: #d20f39; --magenta: #c03fa6; --amber: #b5700f;
+}
+
+/* Expose the tokens to Tailwind utilities (`bg-bg-raised`, `text-fg-dim`, …) */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-raised: var(--bg-raised);
+  --color-bg-inset: var(--bg-inset);
+  --color-bg-hover: var(--bg-hover);
+  --color-bg-active: var(--bg-active);
+  --color-bg-sidebar: var(--bg-sidebar);
+  --color-bg-surface: var(--bg-surface);
+
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-input: var(--input);
+
+  --color-fg: var(--fg);
+  --color-fg-dim: var(--fg-dim);
+  --color-fg-faint: var(--fg-faint);
+  --color-badge: var(--badge);
+
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-dim: var(--accent-dim);
+  --color-ring: var(--ring);
+  --color-surface-raised: var(--surface-raised);
+
+  --color-cyan: var(--cyan);
+  --color-cyan-dim: var(--cyan-dim);
+  --color-green: var(--green);
+  --color-green-dim: var(--green-dim);
+  --color-red: var(--red);
+  --color-red-dim: var(--red-dim);
+  --color-magenta: var(--magenta);
+  --color-magenta-dim: var(--magenta-dim);
+  --color-amber: var(--amber);
+  --color-amber-dim: var(--amber-dim);
+
+  --font-mono: var(--font-mono);
+  --font-ui: var(--font-ui);
+
+  --radius-DEFAULT: var(--radius);
+}
+
+/* ---------------------------------------------------------- utilities ---- */
+/*
+ * T3-style frosted chrome for floating surfaces. Plain classes, opt-in:
+ * the base layout does not turn translucent on its own.
+ */
+.surface-glass {
+  background: color-mix(in srgb, var(--bg-raised) var(--glass-opacity), transparent);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+}
+
+.dialog-glass {
+  background: color-mix(in srgb, var(--bg-raised) var(--glass-opacity), transparent);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-panel);
+}
+
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .surface-glass,
+  .dialog-glass {
+    background: var(--bg-raised);
+  }
+}
+
+/*
+ * The signature: a faint graphene lattice for canvas-level empty states and
+ * hero surfaces. Dots, not lines — a knowledge graph at rest, never a chart.
+ * One element per screen, always behind content, never in chrome.
+ */
+.bg-graph {
+  background-image: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--fg) 6%, transparent) 1px,
+    transparent 1.5px
+  );
+  background-size: 22px 22px;
+  background-position: center;
+}

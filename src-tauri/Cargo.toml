@@ -1,0 +1,89 @@
+[package]
+name = "atimo"
+version = "0.1.0"
+description = "ContextOS for AI"
+authors = ["maccuci"]
+license = "Apache-2.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+# The `_lib` suffix may seem redundant but it is necessary
+# to make the lib name unique and wouldn't conflict with the bin name.
+# This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
+name = "app_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["macos-private-api"] }
+tauri-plugin-opener = "2"
+serde = { version = "1", features = ["derive"] }
+# `raw_value` lets the workspace snapshot travel back to the webview without
+# being parsed and re-serialised — the rows are already JSON on disk.
+serde_json = { version = "1", features = ["raw_value"] }
+
+# Local persistence. `bundled` compiles SQLite from source, so the app does not
+# depend on whatever version the host OS happens to ship.
+rusqlite = { version = "0.40", features = ["bundled"] }
+
+# Model adapter. The provider call lives in Rust so the API key never has to
+# reach the webview: it is written to the OS credential store and read back
+# only inside the request that uses it.
+reqwest = { version = "0.12", default-features = false, features = [
+  "json",
+  "stream",
+  "rustls-tls",
+] }
+futures-util = { version = "0.3", default-features = false, features = ["std"] }
+# Already used by Tauri's build tooling; parse documentation without executing HTML.
+dom_query = "0.27"
+# `process` and `io-util` are for `cli_agent`: a turn routed through a local
+# agent CLI is a spawned child whose stdout is read line by line, and whose
+# stop has to kill the process rather than wait for a line that may not come.
+tokio = { version = "1", features = [
+  "macros",
+  "rt",
+  "sync",
+  "time",
+  "process",
+  "io-util",
+] }
+# One credential-store feature per platform we ship. The list is not optional
+# decoration: keyring has no default features, and a target left off it does not
+# fail to build — it silently falls back to the in-memory *mock* store, where a
+# key saves, reads back once, and is gone at the next launch. `credentials.rs`
+# has a test that fails rather than let that regress.
+#
+# Linux gets the combo store: `keyutils` is the kernel keyring, which is fast but
+# dies with the session, so it is paired with the Secret Service (GNOME Keyring,
+# KWallet) for the half that survives a reboot. `crypto-rust` encrypts the secret
+# in transit over DBus without dragging OpenSSL into the build.
+keyring = { version = "3", features = [
+  "apple-native",
+  "windows-native",
+  "linux-native-sync-persistent",
+  "crypto-rust",
+] }
+tauri-plugin-process = "2"
+
+# Local embeddings — see `embeddings.rs` for why they are local rather than a
+# gateway call. `default-features = false` is doing real work here: the default
+# set pulls native-tls twice (once for ONNX Runtime, once for the model
+# download), and this build already speaks rustls everywhere else. `image-models`
+# is off because nothing here embeds an image.
+fastembed = { version = "5", default-features = false, features = [
+  "ort-download-binaries-rustls-tls",
+  "hf-hub-rustls-tls",
+] }
+# Vectors cross the IPC boundary as base64 rather than as arrays of numbers:
+# 384 floats spelled out in JSON is ~7KB a row, and a project is thousands of
+# rows on a call the frontend makes while the user waits.
+base64 = "0.22"
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-updater = "2"
+

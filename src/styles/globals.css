@@ -1,0 +1,484 @@
+@import "@fontsource-variable/inter";
+@import "tailwindcss";
+@import "./theme-t3.css";
+
+@layer base {
+  * {
+    border-color: var(--border);
+    min-width: 0;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+    height: 100dvh;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-ui);
+    font-size: var(--text-base);
+    line-height: 1.5;
+    letter-spacing: -0.01em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow: hidden;
+    /* Desktop chrome: no text selection outside of content areas. */
+    user-select: none;
+    cursor: default;
+    /* Stop iOS from inflating text and breaking the dense chrome. */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  ::selection {
+    background: var(--selection);
+  }
+
+  button {
+    cursor: default;
+    font: inherit;
+    color: inherit;
+  }
+
+  input,
+  textarea {
+    font: inherit;
+    color: inherit;
+    background: transparent;
+    user-select: text;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--fg-faint);
+  }
+
+  input:focus,
+  textarea:focus,
+  button:focus {
+    outline: none;
+  }
+}
+
+@layer utilities {
+  /* Content the user is meant to read/copy opts back into selection. */
+  .selectable {
+    user-select: text;
+    cursor: auto;
+  }
+
+  .safe-pb {
+    padding-bottom: max(0.75rem, var(--safe-bottom));
+  }
+
+  .safe-pt {
+    padding-top: var(--safe-top);
+  }
+
+  .safe-px {
+    padding-left: max(0.75rem, var(--safe-left));
+    padding-right: max(0.75rem, var(--safe-right));
+  }
+
+  /* Touch: keep hover-gated chrome visible without waiting on a hover. */
+  @media (hover: none), (pointer: coarse) {
+    .touch-visible {
+      opacity: 1 !important;
+    }
+  }
+
+  /* Section labels — quiet hierarchy, not Codex uppercase mono. */
+  .label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: none;
+    color: var(--fg-faint);
+  }
+
+  .scroll-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+  }
+
+  .scroll-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .scroll-thin::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  .scroll-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  /* WKWebView drops the thumb entirely under `appearance: none`, so the
+     scrubber draws its own. */
+  .scrubber {
+    appearance: none;
+    background: var(--bg-inset);
+  }
+
+  .scrubber::-webkit-slider-thumb {
+    appearance: none;
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+    background: var(--cyan);
+    border: none;
+    cursor: pointer;
+  }
+
+  .scrubber::-moz-range-thumb {
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+    background: var(--cyan);
+    border: none;
+    cursor: pointer;
+  }
+}
+
+/* The blinking block cursor from the Codex composer. */
+@keyframes block-blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.cursor-block {
+  animation: block-blink 1.06s steps(1, end) infinite;
+}
+
+/* Codex's shimmer — the one place the style guide allows a custom gradient. */
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--fg-faint) 0%,
+    var(--fg-faint) 40%,
+    var(--fg) 50%,
+    var(--fg-faint) 60%,
+    var(--fg-faint) 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 2.4s linear infinite;
+}
+
+/* Pixel-grid loader — chevron / orbit cells for long waits. */
+@keyframes pixel-on {
+  0%,
+  100% {
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/*
+ * One ember in the effort thumb's wake: lit where it is shed, carried
+ * backwards, spent.
+ *
+ * Both ends are at zero opacity, which is what makes the loop seamless — the
+ * cell restarts at its spawn point while invisible, so a hundred of these on
+ * staggered delays read as a continuous shed rather than as a hundred things
+ * blinking. The whole set rides the thumb's position on a parent transform, so
+ * this only has to describe the drift *relative* to the thumb.
+ *
+ * `--o` is the cell's own brightness, which thins toward the tail.
+ */
+@keyframes tail-ember {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0);
+  }
+  20% {
+    opacity: var(--o);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(-14px, 0, 0);
+  }
+}
+
+/*
+ * Fast stacked on the same wake: same cells, a harder shed. Hits full
+ * brightness sooner, stretches as it goes (a 3px square that stays square
+ * at this speed just strobes), and spends itself further back.
+ */
+@keyframes tail-ember-fast {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scaleX(1);
+  }
+  12% {
+    opacity: var(--o);
+    transform: translate3d(-4px, 0, 0) scaleX(1.35);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(-24px, 0, 0) scaleX(1.7);
+  }
+}
+
+@keyframes shimmer-text {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer {
+    animation: none;
+    color: var(--fg-dim);
+    background: none;
+    -webkit-background-clip: unset;
+    background-clip: unset;
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.fade-up {
+  animation: fade-up 220ms var(--ease-out, ease-out) both;
+}
+
+@keyframes fade-up-soft {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.stagger-in {
+  opacity: 0;
+  animation: fade-up-soft 280ms var(--ease-out, ease-out) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stagger-in,
+  .fade-up {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Pressable surfaces — instant feedback on pointer-down. */
+.pressable {
+  transition: transform 140ms var(--ease-out, ease-out), background-color 160ms ease,
+    border-color 160ms ease, color 160ms ease;
+}
+
+.pressable:active {
+  transform: scale(0.97);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .hover-lift:hover {
+    background: var(--bg-hover);
+  }
+}
+
+/*
+ * Collapse-on-leave. A row that vanishes instantly reads as a glitch, and the
+ * rows below it jumping up reads as a second, unrelated event — so height and
+ * opacity leave together. The `grid-template-rows: 1fr -> 0fr` trick animates
+ * to the content's real height without measuring it in JS.
+ *
+ * Exit is quicker than enter: the user has already decided, and waiting on
+ * their own click is the one delay they always notice.
+ */
+.collapsible {
+  display: grid;
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transition:
+    grid-template-rows var(--dur-collapse) var(--ease-smooth-out, cubic-bezier(0.22, 1, 0.36, 1)),
+    opacity var(--duration-quick, 150ms) ease-out;
+}
+
+.collapsible > * {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.collapsible[data-leaving="true"] {
+  grid-template-rows: 0fr;
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .collapsible {
+    transition: opacity 130ms ease-out;
+  }
+}
+
+/*
+ * Scroll-edge fade.
+ *
+ * A scroll container whose content is cut off by a hard edge does not look cut
+ * off — it looks finished. The fade is the only thing at rest that says there is
+ * more, and it says it without a scrollbar, a shadow, or a chrome the layout has
+ * to make room for.
+ *
+ * A mask rather than a gradient overlay, for two reasons. An overlay has to be
+ * painted in the surface's own color, so every container it covers has to know
+ * what is behind it — and it stops being true the moment anything translucent
+ * sits underneath. A mask takes the content's alpha to zero instead, which
+ * reveals whatever is actually there.
+ *
+ * The band variables are lengths rather than a toggle so the fade can ramp in
+ * when an edge becomes scrollable instead of appearing whole; `@property` is
+ * what makes them animatable at all — an unregistered custom property is an
+ * untyped string and transitions between two of them do not interpolate.
+ *
+ * Both bands rest at 0, which is also the correct degenerate mask: the stops
+ * collapse onto each other and the content is opaque edge to edge. An
+ * unscrollable list therefore needs no special case, and neither does a
+ * container that has not been measured yet.
+ */
+@property --edge-fade-top {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
+@property --edge-fade-bottom {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
+.edge-fade {
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 var(--edge-fade-top),
+    #000 calc(100% - var(--edge-fade-bottom)),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 var(--edge-fade-top),
+    #000 calc(100% - var(--edge-fade-bottom)),
+    transparent 100%
+  );
+  transition:
+    --edge-fade-top var(--dur-quick) var(--ease-out, ease-out),
+    --edge-fade-bottom var(--dur-quick) var(--ease-out, ease-out);
+}
+
+/*
+ * Reduced motion.
+ *
+ * The setting is a request not to be moved, and it has to be answered by the
+ * whole app or it is not answered at all: a window where the panels still slide
+ * because only the entrances were guarded is the same window. So transitions are
+ * flattened here, once, rather than at each of the several hundred call sites
+ * that declare a duration.
+ *
+ * Animations are deliberately NOT swept the same way. Collapsing the duration of
+ * a one-shot leaves it on its final state, which is what is wanted — but doing it
+ * to something running `infinite` turns a slow pulse into a strobe, which is
+ * worse than the motion the setting was asking to remove. Those are stopped by
+ * name below, and stop on their FIRST frame: a spinner's resting state is the
+ * one it starts from, not whatever it happened to end on.
+ */
+@supports (animation: none) {
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      transition-duration: 1ms !important;
+      transition-delay: 0ms !important;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 1ms !important;
+    transition-delay: 0ms !important;
+  }
+
+  /* The composer's block cursor: still a cursor, just no longer blinking.
+     `none` rests it at the first keyframe, which is the visible one. */
+  .cursor-block,
+  .animate-pulse {
+    animation: none !important;
+  }
+
+  /* Nothing is being said by an edge that ramps, so it does not. */
+  .edge-fade {
+    transition: none;
+  }
+}
+
+/*
+ * Glass (macOS): the window is transparent and the system blur sits behind it
+ * (see `applyGlass` in theme.ts). Each top-level surface paints one tint of
+ * its own colour; nested surfaces stay clear so the tints never stack.
+ * Overlays (`.fixed`), the peeking sidebar and theme previews stay opaque.
+ */
+:root[data-glass] {
+  --glass-fade: color-mix(in srgb, var(--bg) var(--glass-tint), transparent);
+}
+:root[data-glass],
+:root[data-glass] body,
+:root[data-glass] .t3-shell {
+  background: transparent;
+}
+:root[data-glass] .bg-bg:not(.t3-shell, .fixed, [data-theme]) {
+  background-color: var(--glass-fade);
+}
+:root[data-glass] .bg-bg:not(.t3-shell) .bg-bg:not(.fixed, [data-theme]) {
+  background-color: transparent;
+}
+:root[data-glass] .t3-rail:not(.t3-rail-peek) {
+  background-color: color-mix(in srgb, var(--bg-sidebar) var(--glass-tint-sidebar), transparent);
+}

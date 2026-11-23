@@ -1,0 +1,43 @@
+name: Linux build dependencies
+description: >
+  System packages the Rust half needs on Linux. Shared by CI and release so the
+  two cannot drift.
+
+# One list, two workflows.
+#
+# The drift this prevents has a specific and nasty shape: CI is the cheap job
+# that runs on every push, release is the expensive one that runs on a tag. A
+# package missing from the release list alone fails loudly and immediately. A
+# package missing from the *CI* list alone is worse — every push goes green,
+# and the build breaks for the first time on the tag that was supposed to ship.
+# Neither list can be the one that gets updated, so there is only one.
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          libwebkit2gtk-4.1-dev \
+          libappindicator3-dev \
+          librsvg2-dev \
+          patchelf \
+          build-essential \
+          libssl-dev \
+          libdbus-1-dev \
+          pkg-config
+
+# What each one is for, since an unexplained apt list is a list nobody can prune:
+#
+#   libwebkit2gtk-4.1-dev  the webview itself — wry links against it, so even
+#                          `cargo check` needs the headers
+#   libappindicator3-dev   tray icon support in the bundle
+#   librsvg2-dev           icon rasterisation at bundle time
+#   patchelf               rpath rewriting for the AppImage
+#   build-essential        C toolchain for the -sys crates
+#   libssl-dev             OpenSSL headers for the dependency tree
+#   libdbus-1-dev          the Secret Service transport behind the keyring's
+#                          Linux store — without it the API key has nowhere
+#                          persistent to go (see src-tauri/src/credentials.rs)
+#   pkg-config             how every -sys crate above finds the rest

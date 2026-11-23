@@ -1,0 +1,330 @@
+/*
+ * Atimo — T3 chrome components
+ *
+ * Component-level styles for the t3code-derived interface. Everything here
+ * consumes the Graphene Night tokens from theme-t3.css; no raw colors.
+ * Class names are `t3-*` so nothing collides with the Codex-era chrome.
+ */
+
+/* ---- shell -------------------------------------------------------------- */
+.t3-rail {
+  border-color: var(--border);
+}
+
+/* ---- cards & rows (context rail, settings-like surfaces) ---------------- */
+.t3-card {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.t3-section-label {
+  font-size: 11px;
+  font-weight: 550;
+  letter-spacing: 0.01em;
+  color: var(--fg-faint);
+  padding: 0 2px;
+}
+
+.t3-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 36px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  letter-spacing: -0.008em;
+  color: var(--fg-dim);
+  text-align: left;
+  transition:
+    background-color 150ms var(--ease-hover),
+    color 150ms var(--ease-hover);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .t3-row:hover {
+    background: var(--bg-hover);
+    color: var(--fg);
+  }
+}
+
+.t3-row[data-active="true"] {
+  background: var(--bg-active);
+  color: var(--fg);
+}
+
+.t3-row .t3-row-value {
+  margin-left: auto;
+  font-size: 11.5px;
+  color: var(--fg-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- sidebar thread rows ------------------------------------------------- */
+.t3-thread-row {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 8px;
+  border-radius: var(--radius);
+  text-align: left;
+  transition: background-color 150ms var(--ease-hover);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .t3-thread-row:hover {
+    background: var(--bg-hover);
+  }
+}
+
+.t3-thread-row[data-active="true"] {
+  background: var(--bg-active);
+}
+
+.t3-thread-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 12.5px;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: var(--fg);
+}
+
+.t3-thread-row[data-active="true"] .t3-thread-title {
+  color: var(--fg);
+}
+
+/* Sidebar variant: t3code's single-line 30px thread row under a project
+   header. Title sits dim until hovered or selected. */
+.t3-side-row {
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 8px 0 10px;
+}
+
+/* One line, always: WebKit ignores line-clamp on <button>, so the title
+   wrapped to two lines in the desktop shell. Plain ellipsis works everywhere. */
+.t3-side-row .t3-thread-title {
+  display: block;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  transition: color 150ms var(--ease-hover);
+  font-size: 13.5px;
+  letter-spacing: -0.008em;
+  color: var(--fg-dim);
+}
+
+.t3-side-row[data-active="true"] .t3-thread-title {
+  color: var(--fg);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .t3-side-row:hover .t3-thread-title {
+    color: var(--fg);
+  }
+}
+
+.t3-thread-sub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+  font-size: 10.5px;
+  line-height: 1.2;
+  letter-spacing: -0.005em;
+  color: var(--fg-faint);
+}
+
+.t3-project-tile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: white;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+/* ---- nav rows (views) --------------------------------------------------- */
+.t3-nav-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: var(--radius);
+  font-size: 13.5px;
+  font-weight: 400;
+  letter-spacing: -0.008em;
+  color: var(--fg-dim);
+  transition:
+    background-color 150ms var(--ease-hover),
+    color 150ms var(--ease-hover);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .t3-nav-row:hover {
+    background: var(--bg-hover);
+    color: var(--fg);
+  }
+}
+
+.t3-nav-row[data-active="true"] {
+  background: var(--bg-active);
+  color: var(--fg);
+}
+
+.t3-nav-row svg {
+  transition: color 150ms var(--ease-hover);
+}
+
+/* t3code keeps selection neutral: the active icon brightens, it does not
+   turn accent. The one hue is reserved for primary actions and focus. */
+.t3-nav-row[data-active="true"] svg,
+.t3-nav-row:hover svg {
+  color: var(--fg);
+}
+
+/* ---- messages ------------------------------------------------------------ */
+.t3-user-bubble {
+  max-width: 80%;
+  margin-left: auto;
+  border-radius: 18px 18px 4px 18px;
+  padding: 9px 14px;
+  background: color-mix(in srgb, var(--fg) 11%, transparent);
+  font-size: 13.5px;
+  line-height: 1.55;
+  letter-spacing: -0.008em;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--fg);
+}
+
+/* ---- composer ------------------------------------------------------------ */
+.t3-composer-shell {
+  border-radius: 20px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 32%),
+    0 18px 44px -18px rgb(0 0 0 / 72%);
+  transition:
+    border-color 150ms var(--ease-hover),
+    box-shadow 150ms var(--ease-hover);
+}
+
+:root[data-theme="light"] .t3-composer-shell {
+  box-shadow:
+    0 1px 2px rgb(24 24 27 / 4%),
+    0 14px 36px -16px rgb(24 24 27 / 14%);
+}
+
+.t3-composer-shell:focus-within {
+  border-color: var(--border-strong);
+}
+
+/* ---- window controls ----------------------------------------------------- */
+.t3-window-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  min-width: 28px;
+  padding: 0 6px;
+  border-radius: 6px;
+  color: var(--fg-dim);
+  transition:
+    background-color 150ms var(--ease-hover),
+    color 150ms var(--ease-hover);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .t3-window-btn:hover {
+    background: var(--bg-hover);
+    color: var(--fg);
+  }
+}
+
+/* ---- kbd ----------------------------------------------------------------- */
+.t3-kbd {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 4px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-inset);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--fg-faint);
+}
+
+/* ---- hero (home) --------------------------------------------------------- */
+/* Claude-style section label above the history ("Recents"). */
+.t3-side-label {
+  padding: 4px 10px 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--fg-faint);
+}
+
+/* Tooltip for icon-only chrome buttons. Shows after a rest (no flash while
+   the pointer passes), sits to the right so it never covers the rows below,
+   and hides instantly. */
+.t3-tip {
+  position: relative;
+}
+.t3-tip[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 8px);
+  z-index: 60;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-raised);
+  color: var(--fg-dim);
+  font-size: 12px;
+  font-weight: 400;
+  white-space: pre;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-2px, -50%);
+  transition:
+    opacity 100ms ease-out,
+    transform 100ms ease-out;
+}
+@media (hover: hover) and (pointer: fine) {
+  .t3-tip[data-tip]:hover::after {
+    opacity: 1;
+    transform: translate(0, -50%);
+    transition-delay: 500ms;
+    transition-duration: 125ms;
+  }
+}
+
+/* Composer (TipTap): placeholder on the empty first paragraph. */
+.composer-editor p {
+  margin: 0;
+}
+.composer-editor p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  color: var(--fg-faint);
+  pointer-events: none;
+}

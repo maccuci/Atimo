@@ -1,0 +1,133 @@
+name: release
+
+# Tag-driven, because the tag is the only place the version can come from that
+# both the bundle and the release feed agree on. `v0.2.0` builds 0.2.0 and
+# publishes it; nothing publishes on a push to a branch.
+on:
+  push:
+    tags:
+      - "v*"
+  # For rehearsing the build without publishing anything.
+  workflow_dispatch:
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # Cheap, and it catches the one mistake in this pipeline that fails silently:
+  # the bundle takes its version from package.json, so a tag that disagrees
+  # publishes a release named v0.2.0 containing 0.1.0. Every installed copy then
+  # compares 0.1.0 against 0.1.0 and correctly decides there is nothing to do —
+  # no error anywhere, and nobody gets the update.
+  verify:
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tag must match package.json
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          PKG="v$(node -p "require('./package.json').version")"
+          if [ "$TAG" != "$PKG" ]; then
+            echo "tag $TAG does not match package.json ($PKG)" >&2
+            exit 1
+          fi
+
+  build:
+    needs: [verify]
+    # `verify` is skipped on workflow_dispatch, and a skipped dependency would
+    # skip this too. Rehearsals are allowed; releases are not, unless it passed.
+    if: always() && needs.verify.result != 'failure'
+    permissions:
+      contents: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Apple silicon and Intel are separate bundles, and the updater feed
+          # carries both: a tester on an Intel Mac handed an aarch64 build gets
+          # an app that will not launch, with no useful message about why.
+          - platform: macos-latest
+            args: --target aarch64-apple-darwin
+            target: aarch64-apple-darwin
+          - platform: macos-latest
+            args: --target x86_64-apple-darwin
+            target: x86_64-apple-darwin
+          - platform: ubuntu-22.04
+            args: ""
+            target: ""
+          - platform: windows-latest
+            args: ""
+            target: ""
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      # Rust builds are the whole cost of this workflow; everything else is
+      # seconds. Keyed per platform-target so the two macOS jobs do not
+      # invalidate each other.
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: ./src-tauri -> target
+          key: ${{ matrix.platform }}-${{ matrix.target }}
+
+      - name: Install Linux dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        uses: ./.github/actions/linux-deps
+
+      - run: bun install --frozen-lockfile
+
+      # Two steps rather than one with conditional inputs, because on a manual
+      # run `github.ref_name` is a branch: a single step would happily cut a
+      # release called "main" every time someone rehearsed the build.
+      - name: Build and publish
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Minisign, not Apple. This is what lets an installed copy verify an
+          # update came from us; it has nothing to do with Gatekeeper, which
+          # would need a Developer ID this project does not have. The two are
+          # independent, and only this one gates updates.
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: Atimo ${{ github.ref_name }}
+          releaseBody: |
+            Unsigned build. macOS refuses it on first open — right-click the app
+            and choose Open, or run `xattr -cr /Applications/Atimo.app`.
+
+            First install only. Later versions arrive through the in-app updater
+            and skip all of this.
+          # A draft, so the notes can be written before anyone is told. Every
+          # installed copy polls `latest.json`, and it only becomes reachable
+          # once the release is published — a half-uploaded feed is the one
+          # failure here that reaches all testers at once.
+          releaseDraft: true
+          prerelease: false
+          includeUpdaterJson: true
+          args: ${{ matrix.args }}
+
+      - name: Build only
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          args: ${{ matrix.args }}
