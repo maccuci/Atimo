@@ -10,7 +10,7 @@ use std::time::{Duration, Instant};
 use serde_json::{json, Value};
 use tauri::ipc::Channel;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader, Lines};
-use tokio::process::{Child, ChildStdin, ChildStdout, Command};
+use tokio::process::{Child, ChildStdin, ChildStdout};
 
 use crate::cancel::Cancel;
 use crate::cli_agent::{model_arg, render, require, Agent};
@@ -56,7 +56,7 @@ impl Client {
         options
             .create(&directory)
             .map_err(|e| format!("could not create the chat workspace: {e}"))?;
-        let child = Command::new(bin)
+        let child = crate::cli_agent::command(bin)
             .args(agent.acp_args())
             .env("NO_BROWSER", "true")
             .env("NO_OPEN_BROWSER", "1")
@@ -535,7 +535,7 @@ mod tests {
         assert!(!directory.exists());
         tokio::time::timeout(Duration::from_secs(2), async {
             loop {
-                let running = Command::new("kill")
+                let running = tokio::process::Command::new("kill")
                     .args(["-0", &pid.to_string()])
                     .stdout(Stdio::null())
                     .stderr(Stdio::null())

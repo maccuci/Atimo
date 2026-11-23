@@ -33,6 +33,19 @@ use tokio::process::Command;
 use crate::cancel::Cancel;
 use crate::openrouter::{Account, CatalogEntry, ChatMessage, ChatRequest, StreamEvent};
 
+/// Every CLI the app runs goes through here. The release build is a GUI
+/// process with no console, so on Windows each console child (codex.exe, or the
+/// cmd.exe behind an npm `codex.cmd` shim) would otherwise get a console window
+/// of its own. `CREATE_NO_WINDOW` gives it a hidden one, and the shells the
+/// agent spawns inherit it instead of opening more.
+pub(crate) fn command(bin: impl AsRef<std::ffi::OsStr>) -> Command {
+    #[cfg_attr(not(windows), allow(unused_mut))]
+    let mut command = Command::new(bin);
+    #[cfg(windows)]
+    command.creation_flags(0x0800_0000); // CREATE_NO_WINDOW
+    command
+}
+
 /// Which CLI. The wire names match `ProviderKey` in `src/lib/adapter/types.ts`.
 #[derive(Deserialize, Serialize, Clone, Copy, PartialEq, Eq, Hash, Debug)]
 #[serde(rename_all = "kebab-case")]
@@ -283,7 +296,7 @@ pub struct AgentProbe {
 /// Run a short command and collect it. Used only for `--version` and the two
 /// login-status subcommands, none of which reach the network for a model.
 async fn capture(bin: &Path, args: &[&str]) -> Result<(String, String, bool), String> {
-    let output = Command::new(bin)
+    let output = command(bin)
         .args(args)
         .stdin(Stdio::null())
         .kill_on_drop(true)
@@ -518,7 +531,7 @@ pub async fn account(agent: Agent) -> Result<Account, String> {
 /// no model is called.
 pub async fn codex_usage() -> Result<Value, String> {
     let bin = require(Agent::CodexCli)?;
-    let mut child = Command::new(&bin)
+    let mut child = command(&bin)
         .arg("app-server")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -872,7 +885,7 @@ async fn run_stream(
     };
     let args = args_for(agent, &request, system_file.as_ref().map(|f| f.0.as_path()), &prompt);
 
-    let mut child = Command::new(&bin)
+    let mut child = command(&bin)
         .args(&args)
         // Claude reads the turn from stdin. Codex gets it closed, not
         // inherited: it waits on a terminal stdin, and a GUI has no one to type.
