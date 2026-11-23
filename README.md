@@ -163,12 +163,21 @@ chegam pelo updater do Tauri, verificadas com uma chave minisign:
 
 ```sh
 gh secret set TAURI_SIGNING_PRIVATE_KEY < ~/.tauri/atimo-updater.key
-gh secret set TAURI_SIGNING_PRIVATE_KEY_PASSWORD --body ""
 ```
+
+A chave não tem senha, então **não** crie `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`:
+o GitHub não aceita secret vazio, `gh secret set --body ""` abre um prompt, e
+qualquer valor ali quebra a assinatura ("Wrong password for that key").
+Sem o secret, o workflow recebe string vazia, que é a senha certa.
+
+Plataformas: Mac Intel fica de fora porque o ONNX Runtime da busca semântica
+(`ort-sys`) não tem binário pronto para `x86_64-apple-darwin`. O Linux é
+compilado no Ubuntu 24.04 e exige glibc 2.39+ (Ubuntu 24.04, Debian 13,
+Fedora 40 ou mais novos).
 
 Para lançar: suba `version` em `package.json` (é o único lugar), commit, e
 `git tag vX.Y.Z && git push origin vX.Y.Z`. O workflow `release.yml` gera
-macOS, Windows e Linux como release **rascunho**; publique quando estiver
+macOS (só Apple silicon), Windows e Linux como release **rascunho**; publique quando estiver
 completo, porque o `latest.json` é o que todas as cópias instaladas consultam.
 
 ## CSP

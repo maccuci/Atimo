@@ -47,15 +47,13 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Apple silicon and Intel are separate bundles, and the updater feed
-          # carries both: a tester on an Intel Mac handed an aarch64 build gets
-          # an app that will not launch, with no useful message about why.
+          # Apple silicon only. Intel Macs are out: ort-sys (the ONNX Runtime
+          # behind fastembed) ships no prebuilt x86_64-apple-darwin binary, so
+          # that target fails to build. The feed has no darwin-x86_64 entry, so
+          # an Intel Mac simply finds no update rather than a broken one.
           - platform: macos-latest
             args: --target aarch64-apple-darwin
             target: aarch64-apple-darwin
-          - platform: macos-latest
-            args: --target x86_64-apple-darwin
-            target: x86_64-apple-darwin
           - platform: ubuntu-24.04
             args: ""
             target: ""
