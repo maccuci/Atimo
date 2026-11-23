@@ -15,10 +15,20 @@ description: >
 runs:
   using: composite
   steps:
+    # The Ubuntu mirror is the slowest thing in the pipeline: the same 72 MB
+    # has taken 30 s on one run and 7 min on the next. Keep the .debs in the
+    # Actions cache so only `apt-get update` (seconds) hits the mirror; a
+    # package that moved on since is the only thing downloaded again.
+    - uses: actions/cache@v4
+      with:
+        path: ~/apt-archives
+        key: apt-${{ runner.os }}-${{ hashFiles('.github/actions/linux-deps/action.yml') }}
+        restore-keys: apt-${{ runner.os }}-
     - shell: bash
       run: |
+        mkdir -p ~/apt-archives/partial
         sudo apt-get update
-        sudo apt-get install -y \
+        sudo apt-get install -y -o Dir::Cache::Archives="$HOME/apt-archives" \
           libwebkit2gtk-4.1-dev \
           libayatana-appindicator3-dev \
           librsvg2-dev \
@@ -27,6 +37,8 @@ runs:
           libssl-dev \
           libdbus-1-dev \
           pkg-config
+        # apt writes the archive as root; the cache step saves it as the runner.
+        sudo chown -R "$USER" ~/apt-archives
 
 # What each one is for, since an unexplained apt list is a list nobody can prune:
 #

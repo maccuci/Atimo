@@ -16,6 +16,11 @@ export default defineConfig(async () => ({
   plugins: [react(), tailwindcss()],
   worker: { format: "es" },
 
+  // The 500 kB warning is a network heuristic. Tauri embeds the bundle in the
+  // binary and loads it from disk, so a big chunk costs parse time, not a
+  // download. Mermaid already loads lazily in its own chunk (~1.5 MB).
+  build: { chunkSizeWarningLimit: 2000 },
+
   // Read from one place. A version typed into the source as well as into
   // `package.json` is a version that is wrong in a crash report exactly when it
   // matters — after a release nobody remembered to bump twice.
