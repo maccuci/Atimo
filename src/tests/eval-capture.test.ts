@@ -12,7 +12,8 @@ const request = (): ChatRequest => ({ model: "deepseek-flash", effort: "high", m
 
 test("capture is opt-in and stops recording", () => {
   captureRequest("not-recorded", "deepseek", request(), "general");
-  expect(stopCapture().requests).toEqual([]);
+  // A finished capture stays readable, so another file's run may still be here.
+  expect(stopCapture().requests.map((r) => r.id)).not.toContain("not-recorded");
   startCapture();
   captureRequest("one", "deepseek", request(), "general");
   const data = stopCapture();

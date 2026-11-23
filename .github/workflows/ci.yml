@@ -56,9 +56,10 @@ jobs:
         # can only assert it on a runner of that platform. Run on macOS alone it
         # passes for free and proves nothing.
         #
-        # ubuntu-22.04 rather than -latest, to match the webkit2gtk the release
-        # bundles link against.
-        platform: [macos-latest, ubuntu-22.04, windows-latest]
+        # ubuntu-24.04 rather than -latest, to match the webkit2gtk the release
+        # bundles link against. Not 22.04: the prebuilt ONNX Runtime behind
+        # fastembed needs glibc 2.38+ (undefined __isoc23_strtol on 22.04).
+        platform: [macos-latest, ubuntu-24.04, windows-latest]
 
     runs-on: ${{ matrix.platform }}
 
@@ -78,7 +79,7 @@ jobs:
           key: ci-${{ matrix.platform }}
 
       - name: Install Linux dependencies
-        if: matrix.platform == 'ubuntu-22.04'
+        if: matrix.platform == 'ubuntu-24.04'
         uses: ./.github/actions/linux-deps
 
       # `--all-targets` reaches the test modules too. They are where the tricky

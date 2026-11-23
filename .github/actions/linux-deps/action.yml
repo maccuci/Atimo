@@ -20,7 +20,7 @@ runs:
         sudo apt-get update
         sudo apt-get install -y \
           libwebkit2gtk-4.1-dev \
-          libappindicator3-dev \
+          libayatana-appindicator3-dev \
           librsvg2-dev \
           patchelf \
           build-essential \
@@ -32,7 +32,7 @@ runs:
 #
 #   libwebkit2gtk-4.1-dev  the webview itself — wry links against it, so even
 #                          `cargo check` needs the headers
-#   libappindicator3-dev   tray icon support in the bundle
+#   libayatana-appindicator3-dev   tray icon support in the bundle
 #   librsvg2-dev           icon rasterisation at bundle time
 #   patchelf               rpath rewriting for the AppImage
 #   build-essential        C toolchain for the -sys crates
