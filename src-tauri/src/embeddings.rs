@@ -312,10 +312,8 @@ mod tests {
     /// Decode what `encode` produced, for assertions only.
     fn decode(encoded: &str) -> Vec<f32> {
         let bytes = BASE64.decode(encoded).unwrap();
-        bytes
-            .chunks_exact(4)
-            .map(|c| f32::from_le_bytes([c[0], c[1], c[2], c[3]]))
-            .collect()
+        let (chunks, _) = bytes.as_chunks::<4>();
+        chunks.iter().map(|c| f32::from_le_bytes(*c)).collect()
     }
 
     #[test]

@@ -49,6 +49,7 @@ impl Client {
             std::process::id(),
             NEXT.fetch_add(1, Ordering::Relaxed)
         ));
+        #[cfg_attr(not(unix), allow(unused_mut))]
         let mut options = std::fs::DirBuilder::new();
         #[cfg(unix)]
         std::os::unix::fs::DirBuilderExt::mode(&mut options, 0o700);
@@ -442,7 +443,6 @@ pub(crate) async fn stream_chat(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::Mutex;
 
     #[test]
     fn model_lists_support_both_acp_shapes() {
