@@ -24,6 +24,7 @@
 
 use std::path::PathBuf;
 use std::sync::Mutex;
+use std::time::{Duration, Instant};
 
 use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine as _;
@@ -70,10 +71,18 @@ pub const DIMS: usize = 768;
 /// rather than handing over whole messages and hoping.
 const MAX_LENGTH: usize = 512;
 
-/// Texts per forward pass. The default is 256, which for 512-token inputs is a
-/// working set big enough to matter on a laptop; the corpus is embedded in the
-/// background either way, so a smaller batch costs latency nobody is waiting on.
-const BATCH: usize = 64;
+/// Texts per forward pass. Attention alone is batch × 12 heads × 512² floats per
+/// layer — ~800MB at 64, ~100MB at 8 — and ONNX Runtime's arena keeps its peak
+/// for the life of the session, so the batch size *is* the resident overhead.
+/// The corpus is embedded in the background, so the smaller batch costs latency
+/// nobody is waiting on.
+const BATCH: usize = 8;
+
+/// How long the model stays in memory after its last use. It is ~1.1GB of
+/// weights; reloading from disk takes a few seconds, which the next search pays
+/// once instead of the whole machine paying the RAM all session.
+/// ponytail: fixed window; make it a setting if users ask.
+pub const IDLE_UNLOAD: Duration = Duration::from_secs(5 * 60);
 
 /// E5 was trained with these two words in front of every input, and it is not
 /// decoration: the asymmetry is what lets a short question and a long answer
@@ -133,6 +142,7 @@ pub struct Embeddings {
     cache_dir: PathBuf,
     model: Mutex<Option<TextEmbedding>>,
     state: Mutex<Status>,
+    last_used: Mutex<Instant>,
 }
 
 impl Embeddings {
@@ -150,6 +160,33 @@ impl Embeddings {
                 error: None,
                 downloaded: false,
             }),
+            last_used: Mutex::new(Instant::now()),
+        }
+    }
+
+    fn touch(&self) {
+        if let Ok(mut at) = self.last_used.lock() {
+            *at = Instant::now();
+        }
+    }
+
+    /// Drop the model if nothing has used it for `idle`. State stays `Ready`:
+    /// the files are on disk and the next `embed` reloads transparently, so to
+    /// the frontend nothing changed but the RAM. Skips if a call holds the model.
+    pub fn unload_if_idle(&self, idle: Duration) -> bool {
+        let idle_for = match self.last_used.lock() {
+            Ok(at) => at.elapsed(),
+            Err(_) => return false,
+        };
+        if idle_for < idle {
+            return false;
+        }
+        match self.model.try_lock() {
+            Ok(mut slot) if slot.is_some() => {
+                *slot = None;
+                true
+            }
+            _ => false,
         }
     }
 
@@ -203,6 +240,7 @@ impl Embeddings {
             }
         };
 
+        self.touch();
         if slot.is_some() {
             self.set_state(State::Ready, None);
             return self.status();
@@ -283,6 +321,8 @@ impl Embeddings {
         let vectors = model
             .embed(&prefixed, Some(BATCH))
             .map_err(|e| format!("could not embed this text: {e}"))?;
+        // After the work, so a long reindex does not count as idle time.
+        self.touch();
 
         Ok(vectors.iter().map(|vector| encode(vector)).collect())
     }
@@ -610,6 +650,24 @@ mod tests {
              Portuguese noise through",
             noise - median
         );
+    }
+
+    #[test]
+    fn idle_unload_without_a_model_is_a_no_op() {
+        let embeddings = Embeddings::new(std::env::temp_dir().join("atimo-test-models"));
+        assert!(!embeddings.unload_if_idle(Duration::ZERO));
+        assert!(!embeddings.unload_if_idle(Duration::from_secs(3600)));
+    }
+
+    #[test]
+    #[ignore = "downloads the model"]
+    fn an_idle_model_is_dropped_and_reloads_on_the_next_embed() {
+        let e = Embeddings::new(std::env::temp_dir().join("atimo-models"));
+        assert_eq!(e.prepare(true).state, State::Ready);
+        assert!(!e.unload_if_idle(Duration::from_secs(3600)));
+        assert!(e.unload_if_idle(Duration::ZERO));
+        assert!(e.model.lock().unwrap().is_none());
+        assert_eq!(e.embed(&["oi".into()], Role::Query).unwrap().len(), 1);
     }
 
     #[test]

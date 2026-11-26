@@ -412,7 +412,14 @@ pub fn run() {
             // model is user data in every sense that matters here — it is what
             // their workspace was indexed with, and uninstalling the app should
             // take it, not leave a gigabyte in a directory nobody will find.
-            app.manage(Arc::new(Embeddings::new(data_dir.join("models"))));
+            let embeddings = Arc::new(Embeddings::new(data_dir.join("models")));
+            // Gives the ~1.1GB model back to the OS when nobody is searching.
+            let idle = embeddings.clone();
+            std::thread::spawn(move || loop {
+                std::thread::sleep(std::time::Duration::from_secs(60));
+                idle.unload_if_idle(embeddings::IDLE_UNLOAD);
+            });
+            app.manage(embeddings);
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![

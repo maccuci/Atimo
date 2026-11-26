@@ -202,9 +202,8 @@ export function declineEmbeddings(): void {
 /**
  * Switch smart search off. Search goes back to matching words at once; the
  * downloaded model stays on disk, so switching back on is instant.
- *
- * ponytail: the model stays loaded in Rust's memory until the app restarts;
- * add an `embeddings_unload` command if that RAM matters.
+
+ * Rust drops the model from memory after `IDLE_UNLOAD` without use.
  */
 export function disableEmbeddings(): void {
   setConsent("declined");
